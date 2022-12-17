@@ -10,8 +10,8 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.template.loader import get_template
-# from django.core.mail import EmailMessage
-from django.core.mail import send_mail, EmailMultiAlternatives
+from django.core.mail import BadHeaderError, send_mail, EmailMultiAlternatives
+from django.http import HttpResponse
 # Create your views here.
 
 
@@ -272,7 +272,7 @@ def sendEmail(order_id):
     try:
         subject = "ZStore - New Order #{}".format(transaction.id)
         to = ['{}'.format(transaction.emailAddress)]
-        from_email = "oers@zero2lardunch.com"
+        from_email = "nayanrahman51@gmail.com"
         order_information = {
             'transaction': transaction,
             'order_items': order_items
@@ -290,31 +290,19 @@ def contact(request):
     if request.method == 'POST':
         form = ContactForm(request.POST)
         if form.is_valid():
-            subject = form.cleaned_data.get('subject')
-            from_email = form.cleaned_data.get('from_email')
-            message = form.cleaned_data.get('message')
-            name = form.cleaned_data.get('name')
+            subject = form.cleaned_data['subject']
+            from_email = form.cleaned_data['from_email']
+            message = form.cleaned_data['message']
+            name = form.cleaned_data['name']
 
             message_format = "{0} has sent you a new message:\n\n{1}".format(
                 name, message)
-
-            msg = send_mail(
-                # subject,
-                # message_format,
-                # ['nayanrahman51@gmail.com'],
-                # from_email=from_email,
-                # fail_silently=False,
-                subject,
-                message_format,
-                from_email,
-                ['nayanrahman51@gmail.com'],
-                fail_silently=False,
-            )
-
-            # msg.send()
-
+            try:
+                send_mail(subject, message_format, from_email, [
+                          'nayanrahman51@gmail.com'], fail_silently=False)
+            except BadHeaderError:
+                return HttpResponse('Invalid header found.')
             return render(request, 'contact_success.html')
-
     else:
         form = ContactForm()
 
